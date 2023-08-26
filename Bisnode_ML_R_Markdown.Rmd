@@ -1,0 +1,156 @@
+---
+title: "Bisnode analysis"
+date: "2023-04-10"
+output:
+  html_document: default
+  pdf_document: default
+---
+Começamos a modelagem carregando as libraries necessárias 
+
+```{r setup}
+library(tidymodels)
+library(skimr)
+library(modeldata)
+library(glmnet)
+library(plotmo)
+library(pROC)
+library(DescTools)
+library(GGally)
+library(rsample)
+library(rpart)
+library(rpart.plot)
+library(partykit)
+library(packrat)
+library(ranger)
+library(MASS)
+library(readr)
+library(vip)
+library(DALEX)
+
+bisnode_prep <- read_csv("C:\Users\Jeffs\Documents\PADS Insper\1T\Bisnode\df.csv")
+
+View(bisnode_prep)
+```
+
+
+Analisamos algumas estatísticas descritivas da base limpa
+
+```{r skim}
+skimr::skim(bisnode_prep)
+```
+```{r Fatores}
+
+bisnode_prep <- mutate_at(bisnode_prep, vars(gender, origin, urban_m, region_m, falira), as.factor)
+
+```
+
+
+Iniciamos a modelagem com uma árvore de decisão
+
+```{r arvore}
+set.seed(122)
+
+splits <- initial_split(bisnode_prep, prop = .8)
+
+tr   <- training(splits)
+test <- testing(splits)
+
+arvore <- rpart(falira ~ .-comp_id, data = tr, method = "anova")
+
+rpart.plot(arvore, roundint = TRUE, cex = NULL)
+```
+
+Percebemos que pela pequena quantidade de "falira" na base, a árvore final apresenta um único nó; o que podemos observar pela distribuição dessa variável nos seus níveis na tabela abaixo.
+
+```{r tabela}
+table(tr$falira)
+```
+
+Vemos que, das 20159 observações, apenas 1052 estão na categoria "falira", o que prejudica a modelagem pela falta de variabilidade.
+
+Dando continuidade com a análise rodamos uma árvore aleatória com a análise de importância das preditoras.
+
+```{r floresta}
+set.seed(122)
+
+splits <- initial_split(bisnode_prep, prop = .8)
+
+tr   <- training(splits)
+test <- testing(splits)
+
+(rf <- ranger(falira ~ .-comp_id -sem_sales, data = tr, importance = 'permutation'))
+
+vip::vip(rf, aesthetics = list(fill = "#FF5757"))
+```
+Analisando o gráfico de barras acima, vemos que as variáveis de maior importância seriam as financeiras de fluxo (receita bruta, receita antes dos impostos e lucro líquido), sendo que variáveis qualitativas e de liderança como gender e origin não apareceram como relevantes na permutação.
+
+Como nossa base apresentou uma distribuição pequena na categoria de interesse da variável que queremos prever, geramos outra base mudando o critério de falência. Agora consideramos que uma empresa faliu se sua receita no ano X foi diferente de zero, seguida por receitas em X+1 = X+2 = 0 
+
+
+```{r base2}
+bisnode_prep2 <- read_csv("C:\Users\Jeffs\Documents\PADS Insper\1T\Bisnode\df2.csv")
+
+skimr::skim(bisnode_prep2)
+```
+
+```{r Fatores}
+
+bisnode_prep <- mutate_at(bisnode_prep, vars(gender, origin, urban_m, region_m, falira), as.factor)
+
+```
+
+Fizemos novamente a árvore de decisão para a base no novo critério.
+
+```{r arvore 2}
+set.seed(122)
+
+splits2 <- initial_split(bisnode_prep2, prop = .8)
+
+tr2   <- training(splits2)
+test2 <- testing(splits2)
+
+arvore2 <- rpart(falira ~ .-comp_id, data = tr2, method = "anova")
+
+rpart.plot(arvore2, roundint = TRUE, cex = 0.55)
+```
+
+Vemos que a preditora sales continua tendo mais importância, e que agora o estoque e capital passaram a ser relevantes ao determinar a probabilidade de uma empresa falir ou nao.
+
+```{r tabela 2}
+table(tr2$falira)
+```
+
+Também fizemos novamente a floresta na nova base, observando que as variáveis financeiras de fluxo de caixa bruto e líquido, assim como o resultado, são as mais relevantes na previsão de falência de uma empresa.
+
+```{r floresta2}
+set.seed(122)
+
+splits2 <- initial_split(bisnode_prep2, prop = .8)
+
+tr2   <- training(splits2)
+test2 <- testing(splits2)
+
+(rf2 <- ranger(falira ~ .-comp_id, data = tr2, importance = 'permutation'))
+
+vip::vip(rf2, aesthetics = list(fill = "#FF5757"))
+```
+
+```{r Dalex 1 & 2}
+
+explainer <- DALEX::explain(arvore, data = tr[,-ncol(tr)], y = tr$falira)
+
+
+explainer2 <- DALEX::explain(arvore2, data = tr2[,-ncol(tr2)], y = tr2$falira)
+```
+
+
+```{r Dalex 1 & 2}
+
+vip_rf  <- variable_importance(explainer)
+plot(vip_rf)
+
+
+vip_rf2  <- variable_importance(explainer2)
+plot(vip_rf2)
+```
+      
