@@ -1,8 +1,8 @@
 ## Project context
 Building a complete data preprocessing and predictive classification model pipeline aimed at forecasting whether a company will cease operations within the next two years. The data was collected and curated by Bisnode, a European company specializing in business information. The dataset spans from 2005 to 2016 and encompasses companies across various sectors of the economy (such as electronics, electrical equipment, engines, etc.) and services (food, beverages, and lodging). Companies with revenue exceeding 100 million Euros were anonymized to minimize identification possibilities.
 
-## Preprocessing Activities (Python)
-The entire data preprocessing pipeline for building the predictive models was carried out in Python.
+## Preprocessing Activities (Python, R)
+The entire data preprocessing pipeline was carried out in Python. Python scripts were used for data preprocessing, modeling, and exploratory analysis. For the final delivery of the predictive models, R Markdown was employed.
 
 ## Information
 - Remove records from the year `2016` from your data.
@@ -21,9 +21,10 @@ The entire data preprocessing pipeline for building the predictive models was ca
 - Descriptive statistics and graphs were employed.
 - Files are available in the formats: .ipynb and .html.
 
-## Objective
-The objective of this project is to develop a predictive model to indicate whether a company will cease operations within a period of up to two years.
+## ML model objective
+The objective of this project is to develop a predictive model to indicate whether a company will cease operations within a period of up to two years. 
 
+- 
 - The predictive models used was: decision trees, random forests, and ROC curve analysis.
 - Hyperparameter tuning was also performed.
 - The models were compared in terms of their predictive performance.
