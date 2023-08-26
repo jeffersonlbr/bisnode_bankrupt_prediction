@@ -24,7 +24,6 @@ The entire data preprocessing pipeline was carried out in Python. Python scripts
 ## ML model objective
 The objective of this project is to develop a predictive model to indicate whether a company will cease operations within a period of up to two years. 
 
-- 
 - The predictive models used was: decision trees, random forests, and ROC curve analysis.
 - Hyperparameter tuning was also performed.
 - The models were compared in terms of their predictive performance.
